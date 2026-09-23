@@ -1,0 +1,24 @@
+警告: C:\Users\Administrator\.gradle\caches\modules-2\files-2.1\io.github.humbleui\types\0.1.1\bdc20f23c48ec24e183ab9523bb03347c932aebf\types-0.1.1.jar(io/github/humbleui/types/RRect.class): 主版本 53 比 52 新, 此编译器支持最新的主版本。
+  建议升级此编译器。
+警告: C:\Users\Administrator\.gradle\caches\modules-2\files-2.1\io.github.humbleui\types\0.1.1\bdc20f23c48ec24e183ab9523bb03347c932aebf\types-0.1.1.jar(io/github/humbleui/types/Rect.class): 主版本 53 比 52 新, 此编译器支持最新的主版本。
+  建议升级此编译器。
+注: SpongePowered MIXIN Annotation Processor Version=0.8.5
+注: Supported obfuscation types: ObfuscationServiceMCP supports [searge,notch] ObfuscationServiceFabric supports [official:intermediary,official:named,intermediary:official,intermediary:named,named:official,named:intermediary]
+注: Loading named:intermediary mappings from C:\Users\Administrator\.gradle\caches\essential-loom\1.8.9\de.oceanlabs.mcp.mcp_stable.1_8_9.22-1.8.9-forge-1.8.9-11.15.1.2318-1.8.9\mappings-mixin-srg.tiny
+注: Writing refmap to C:\Users\Administrator\Documents\GitHub\OpenMyau\build\classes\java\main\mixins.myau.refmap.json
+注: Writing refmap to C:\Users\Administrator\Documents\GitHub\OpenMyau\build\classes\java\main\mixins.myau.refmap.json
+注: Writing named:intermediary output TinyMappings to C:\Users\Administrator\Documents\GitHub\OpenMyau\build\loom-cache\mixin-map-de.oceanlabs.mcp.mcp_stable.1_8_9.22-1.8.9-forge-1.8.9-11.15.1.2318-1.8.9.0.tiny
+警告: C:\Users\Administrator\.gradle\caches\modules-2\files-2.1\io.github.humbleui\types\0.1.1\bdc20f23c48ec24e183ab9523bb03347c932aebf\types-0.1.1.jar(io/github/humbleui/types/RRect.class): 主版本 53 比 52 新, 此编译器支持最新的主版本。
+  建议升级此编译器。
+警告: C:\Users\Administrator\.gradle\caches\modules-2\files-2.1\io.github.humbleui\types\0.1.1\bdc20f23c48ec24e183ab9523bb03347c932aebf\types-0.1.1.jar(io/github/humbleui/types/Rect.class): 主版本 53 比 52 新, 此编译器支持最新的主版本。
+  建议升级此编译器。
+注: Writing refmap to C:\Users\Administrator\Documents\GitHub\OpenMyau\build\classes\java\main\mixins.myau.refmap.json
+注: Writing refmap to C:\Users\Administrator\Documents\GitHub\OpenMyau\build\classes\java\main\mixins.myau.refmap.json
+注: Writing named:intermediary output TinyMappings to C:\Users\Administrator\Documents\GitHub\OpenMyau\build\loom-cache\mixin-map-de.oceanlabs.mcp.mcp_stable.1_8_9.22-1.8.9-forge-1.8.9-11.15.1.2318-1.8.9.0.tiny
+警告: C:\Users\Administrator\.gradle\caches\modules-2\files-2.1\io.github.humbleui\types\0.1.1\bdc20f23c48ec24e183ab9523bb03347c932aebf\types-0.1.1.jar(io/github/humbleui/types/RRect.class): 主版本 53 比 52 新, 此编译器支持最新的主版本。
+  建议升级此编译器。
+警告: C:\Users\Administrator\.gradle\caches\modules-2\files-2.1\io.github.humbleui\types\0.1.1\bdc20f23c48ec24e183ab9523bb03347c932aebf\types-0.1.1.jar(io/github/humbleui/types/Rect.class): 主版本 53 比 52 新, 此编译器支持最新的主版本。
+  建议升级此编译器。
+注: 某些输入文件使用了未经检查或不安全的操作。
+注: 有关详细信息, 请使用 -Xlint:unchecked 重新编译。
+6 个警告
