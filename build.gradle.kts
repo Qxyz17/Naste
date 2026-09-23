@@ -1,4 +1,8 @@
 import org.apache.commons.lang3.SystemUtils
+import java.io.File
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 plugins {
     idea
     java
@@ -76,9 +80,6 @@ dependencies {
     // If you don't want to log in with your real minecraft account, remove this line
     runtimeOnly("me.djtheredstoner:DevAuth-forge-legacy:1.2.1")
 
-    // Skija (Skia 2D) — bundled + shadowed so native libs ship inside the mod jar.
-    // 0.109.x is the first line with Java 8 support again.
-    shadowImpl("io.github.humbleui:skija-windows-x64:0.109.2")
 }
 // Tasks:
 tasks.withType(JavaCompile::class) {
@@ -119,6 +120,11 @@ tasks.shadowJar {
     destinationDirectory.set(layout.buildDirectory.dir("intermediates"))
     archiveClassifier.set("non-obfuscated-with-deps")
     configurations = listOf(shadowImpl)
+    // 关键：排除 Multi-Release JAR 的 META-INF/versions/ (Java 9+ 字节码)。
+    // Forge 1.8.9 的 ASM 5.0.3 读不了 major 53，会导致整个 jar 被丢弃。
+    exclude("META-INF/versions/**")
+    // 排除 Java 9 模块描述符，Forge ASM 读不了。
+    exclude("module-info.class")
     doLast {
         configurations.forEach {
             println("Copying dependencies into mod: ${it.files}")
@@ -128,13 +134,3 @@ tasks.shadowJar {
     fun relocate(name: String) = relocate(name, "$baseGroup.deps.$name")
 }
 tasks.assemble.get().dependsOn(tasks.remapJar)
-
-// 临时验证 task：跑 SkijaVerify.main，确认 skija native 能在运行时加载。
-// 通过后可删除。
-tasks.register<JavaExec>("verifySkija") {
-    group = "verification"
-    description = "Run SkijaVerify to validate skija native loading"
-    dependsOn("compileJava")
-    classpath = sourceSets.main.get().output + configurations.getByName("shadowImpl")
-    mainClass.set("myau.ui.skia.SkijaVerify")
-}
