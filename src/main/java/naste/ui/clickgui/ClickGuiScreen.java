@@ -30,16 +30,21 @@ public class ClickGuiScreen extends GuiScreen {
     private int backgroundTexture() {
         if (bgTexture != -2) return bgTexture;
         try {
-            java.io.InputStream is = net.minecraft.client.Minecraft.getMinecraft()
-                    .getResourceManager().getResource(
-                            new net.minecraft.util.ResourceLocation("naste:textures/background.png"))
-                    .getInputStream();
+            // 直接从 jar 读（绕过 MC 资源系统，更可靠）
+            java.io.InputStream is = ClickGuiScreen.class.getResourceAsStream("/assets/naste/textures/background.png");
+            if (is == null) {
+                System.out.println("[Naste] background.png not found in classpath!");
+                bgTexture = -1;
+                return bgTexture;
+            }
             java.awt.image.BufferedImage img = javax.imageio.ImageIO.read(is);
             bgWidth = img.getWidth();
             bgHeight = img.getHeight();
             bgTexture = uploadTexture(img);
             is.close();
+            System.out.println("[Naste] background loaded " + bgWidth + "x" + bgHeight + " tex=" + bgTexture);
         } catch (Throwable t) {
+            System.out.println("[Naste] background load FAILED: " + t);
             bgTexture = -1;
         }
         return bgTexture;

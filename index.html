@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Naste Client — Modern Minecraft 1.8.9 Client</title>
+<style>
+  :root {
+    --bg: #0A0C10;
+    --surface: #12161A;
+    --surface-raised: #1A1F24;
+    --border: rgba(255,255,255,0.08);
+    --text: #F1F6F4;
+    --text-muted: #A6B2AE;
+    --text-faint: #677571;
+    --accent: #3ED6B4;
+    --accent-dim: rgba(62,214,180,0.12);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'HarmonyOS Sans SC', -apple-system, 'Segoe UI', system-ui, sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+  /* ---------- HERO ---------- */
+  .hero {
+    min-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    background: radial-gradient(circle at 50% 0%, rgba(62,214,180,0.10) 0%, transparent 55%);
+    position: relative;
+  }
+  .logo {
+    font-size: clamp(3rem, 9vw, 6rem);
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    color: var(--accent);
+    text-shadow: 0 0 28px rgba(62,214,180,0.55), 0 0 72px rgba(62,214,180,0.28);
+    animation: breathe 2.6s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.85; text-shadow: 0 0 22px rgba(62,214,180,0.45); }
+    50% { opacity: 1; text-shadow: 0 0 40px rgba(62,214,180,0.85), 0 0 90px rgba(62,214,180,0.35); }
+  }
+  .tagline { margin-top: 1.4rem; color: var(--text-muted); font-size: clamp(0.95rem, 2vw, 1.15rem); letter-spacing: 0.03em; }
+  .hero-btns { margin-top: 2.8rem; display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+  .btn {
+    padding: 0.85rem 2.2rem; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-size: 0.95rem; font-weight: 600;
+    cursor: pointer; text-decoration: none;
+    transition: all 170ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .btn:hover { transform: scale(1.045); border-color: rgba(62,214,180,0.5); box-shadow: 0 0 28px rgba(62,214,180,0.22); background: var(--surface-raised); }
+  .btn:active { transform: scale(0.97); }
+  .btn.primary { background: linear-gradient(135deg, rgba(62,214,180,0.20), rgba(62,214,180,0.05)); border-color: rgba(62,214,180,0.45); }
+  /* ---------- SECTIONS ---------- */
+  section { max-width: 1100px; margin: 0 auto; padding: 5rem 1.6rem; }
+  .section-title { font-size: clamp(1.5rem, 3.5vw, 2.1rem); font-weight: 700; letter-spacing: 0.02em; }
+  .section-sub { color: var(--text-muted); margin-top: 0.6rem; margin-bottom: 2.8rem; }
+  /* features grid */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.6rem;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--accent); opacity: 0; transition: opacity 200ms;
+  }
+  .card:hover { transform: translateY(-4px); border-color: rgba(62,214,180,0.35); box-shadow: 0 12px 40px rgba(0,0,0,0.45); }
+  .card:hover::before { opacity: 1; }
+  .card h3 { font-size: 1.05rem; margin-bottom: 0.5rem; color: var(--text); }
+  .card p { font-size: 0.9rem; color: var(--text-muted); }
+  /* showcase */
+  .shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.4rem; }
+  .shot {
+    border-radius: 16px; overflow: hidden; border: 1px solid var(--border);
+    background: var(--surface); transition: all 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .shot:hover { transform: scale(1.02); border-color: rgba(62,214,180,0.4); box-shadow: 0 0 40px rgba(62,214,180,0.15); }
+  .shot img { width: 100%; display: block; }
+  /* cta */
+  .cta { text-align: center; padding: 6rem 1.6rem; }
+  .cta .btn { font-size: 1.05rem; padding: 1rem 2.8rem; }
+  /* footer */
+  footer {
+    border-top: 1px solid var(--border); padding: 2.5rem 1.6rem;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 1rem; color: var(--text-faint); font-size: 0.85rem;
+    max-width: 1100px; margin: 0 auto;
+  }
+  footer a { color: var(--text-muted); text-decoration: none; transition: color 160ms; }
+  footer a:hover { color: var(--accent); }
+  .footer-links { display: flex; gap: 1.5rem; }
+</style>
+</head>
+<body>
+  <!-- HERO -->
+  <div class="hero">
+    <div class="logo">NASTE</div>
+    <div class="tagline">A modern Minecraft 1.8.9 client · built on OpenGL</div>
+    <div class="hero-btns">
+      <a class="btn primary" href="https://github.com/Qxyz17/Naste/releases">Download</a>
+      <a class="btn" href="https://github.com/Qxyz17/Naste">View on GitHub</a>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section>
+    <div class="section-title">Features</div>
+    <div class="section-sub">Everything you need, nothing you don't.</div>
+    <div class="grid">
+      <div class="card"><h3>Combat</h3><p>KillAura, AutoClicker, Reach, Velocity, HitSelect and more — tuned for HvH.</p></div>
+      <div class="card"><h3>Movement</h3><p>Speed, Fly, LongJump, Scaffold, NoSlow, NoFall — smooth and server-safe.</p></div>
+      <div class="card"><h3>Render</h3><p>ESP, Chams, Tracers, NameTags, Xray, Radar, TargetHUD and a clean HUD.</p></div>
+      <div class="card"><h3>Player</h3><p>AutoHeal, AutoTool, InvManager, ChestStealer, FastPlace, GhostHand.</p></div>
+      <div class="card"><h3>Click GUI</h3><p>A fluid, animated ClickGUI — rounded, glowing, and fully themeable.</p></div>
+      <div class="card"><h3>Misc</h3><p>Spammer, NickHider, AntiObfuscate, BedNuker and other utilities.</p></div>
+    </div>
+  </section>
+
+  <!-- SHOWCASE -->
+  <section>
+    <div class="section-title">Showcase</div>
+    <div class="section-sub">Clean, fast, and built to feel good.</div>
+    <div class="shots">
+      <div class="shot"><img src="images/image.png" alt="Naste preview 1"></div>
+      <div class="shot"><img src="images/image2.png" alt="Naste preview 2"></div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="cta">
+    <div class="section-title">Ready to play?</div>
+    <div class="section-sub">Download Naste and drop it in your mods folder.</div>
+    <a class="btn primary" href="https://github.com/Qxyz17/Naste/releases">Download Naste</a>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div>Built with care · Qxyz17</div>
+    <div class="footer-links">
+      <a href="https://github.com/Qxyz17/Naste">GitHub</a>
+      <a href="https://discord.gg/yjSaTufmqU">Discord</a>
+    </div>
+  </footer>
+</body>
+</html>
