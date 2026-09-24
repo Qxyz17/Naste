@@ -25,12 +25,93 @@ public final class Render2D {
         GlStateManager.resetColor();
     }
 
+    /**
+     * 画全屏纹理（UV 0~1），覆盖整个矩形。
+     */
+    public static void drawTexture(float x, float y, float w, float h) {
+        GlStateManager.enableTexture2D();
+        GlStateManager.enableBlend();
+        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GlStateManager.color(1f, 1f, 1f, 1f);
+        GL11.glBegin(GL11.GL_QUADS);
+        GL11.glTexCoord2f(0, 0); GL11.glVertex2f(x, y);
+        GL11.glTexCoord2f(0, 1); GL11.glVertex2f(x, y + h);
+        GL11.glTexCoord2f(1, 1); GL11.glVertex2f(x + w, y + h);
+        GL11.glTexCoord2f(1, 0); GL11.glVertex2f(x + w, y);
+        GL11.glEnd();
+        GlStateManager.resetColor();
+    }
+
+    /**
+     * 画纹理，按"cover"模式铺满（保持比例，超出部分裁剪）。
+     */
+    public static void drawTextureCover(float x, float y, float w, float h,
+                                        float texW, float texH) {
+        float texAspect = texW / texH;
+        float boxAspect = w / h;
+        float u0 = 0, v0 = 0, u1 = 1, v1 = 1;
+        if (texAspect > boxAspect) {
+            // 纹理更宽：裁左右
+            float visible = boxAspect / texAspect;
+            u0 = (1f - visible) / 2f;
+            u1 = 1f - u0;
+        } else {
+            // 纹理更高：裁上下
+            float visible = texAspect / boxAspect;
+            v0 = (1f - visible) / 2f;
+            v1 = 1f - v0;
+        }
+        GlStateManager.enableTexture2D();
+        GlStateManager.enableBlend();
+        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GlStateManager.color(1f, 1f, 1f, 1f);
+        GL11.glBegin(GL11.GL_QUADS);
+        GL11.glTexCoord2f(u0, v0); GL11.glVertex2f(x, y);
+        GL11.glTexCoord2f(u0, v1); GL11.glVertex2f(x, y + h);
+        GL11.glTexCoord2f(u1, v1); GL11.glVertex2f(x + w, y + h);
+        GL11.glTexCoord2f(u1, v0); GL11.glVertex2f(x + w, y);
+        GL11.glEnd();
+        GlStateManager.resetColor();
+    }
+
     private static void setColor(int argb) {
         float a = (argb >> 24 & 0xFF) / 255f;
         float r = (argb >> 16 & 0xFF) / 255f;
         float g = (argb >> 8 & 0xFF) / 255f;
         float b = (argb & 0xFF) / 255f;
         GlStateManager.color(r, g, b, a);
+    }
+
+    /** 垂直渐变矩形（top -> bottom）。 */
+    public static void fillGradientRectV(float x, float y, float w, float h, int top, int bottom) {
+        float ta = (top >> 24 & 0xFF) / 255f, tr = (top >> 16 & 0xFF) / 255f, tg = (top >> 8 & 0xFF) / 255f, tb = (top & 0xFF) / 255f;
+        float ba = (bottom >> 24 & 0xFF) / 255f, br = (bottom >> 16 & 0xFF) / 255f, bg = (bottom >> 8 & 0xFF) / 255f, bb = (bottom & 0xFF) / 255f;
+        setup();
+        GL11.glBegin(GL11.GL_QUADS);
+        GlStateManager.color(tr, tg, tb, ta);
+        GL11.glVertex2f(x, y);
+        GL11.glVertex2f(x + w, y);
+        GlStateManager.color(br, bg, bb, ba);
+        GL11.glVertex2f(x + w, y + h);
+        GL11.glVertex2f(x, y + h);
+        GL11.glEnd();
+        teardown();
+    }
+
+    /** 水平渐变矩形（left -> right）。 */
+    public static void fillGradientRectH(float x, float y, float w, float h, int left, int right) {
+        float la = (left >> 24 & 0xFF) / 255f, lr = (left >> 16 & 0xFF) / 255f, lg = (left >> 8 & 0xFF) / 255f, lb = (left & 0xFF) / 255f;
+        float ra = (right >> 24 & 0xFF) / 255f, rr = (right >> 16 & 0xFF) / 255f, rg = (right >> 8 & 0xFF) / 255f, rb = (right & 0xFF) / 255f;
+        setup();
+        GL11.glBegin(GL11.GL_QUADS);
+        GlStateManager.color(lr, lg, lb, la);
+        GL11.glVertex2f(x, y);
+        GL11.glVertex2f(x, y + h);
+        GlStateManager.color(rr, rg, rb, ra);
+        GL11.glVertex2f(x + w, y + h);
+        GL11.glVertex2f(x + w, y);
+        GL11.glEnd();
+        teardown();
     }
 
     /** 普通矩形填充。 */
@@ -160,5 +241,31 @@ public final class Render2D {
             double angle = Math.toRadians(startDeg + (endDeg - startDeg) * i / (double) seg);
             GL11.glVertex2f(cx + (float) Math.cos(angle) * r, cy + (float) Math.sin(angle) * r);
         }
+    }
+
+    /**
+     * 发光（GL11 用多层描边模拟）：从外到内画 N 层逐渐减小、逐渐变亮的描边。
+     * @param strength 0~1 发光强度
+     */
+    public static void glowRoundRect(float x, float y, float w, float h, float radius,
+                                     int color, float strength) {
+        if (strength <= 0f) return;
+        int layers = 4;
+        int baseR = (color >> 16) & 0xFF;
+        int baseG = (color >> 8) & 0xFF;
+        int baseB = color & 0xFF;
+        for (int i = layers; i >= 1; i--) {
+            float expand = i * 1.6f;
+            float a = strength * (1f - (i - 1) / (float) layers) * 0.45f;
+            int alpha = (int) (255 * a);
+            int c = (alpha << 24) | (baseR << 16) | (baseG << 8) | baseB;
+            strokeRoundRect(x - expand, y - expand, w + expand * 2, h + expand * 2,
+                    radius + expand, 1.6f, c);
+        }
+    }
+
+    /** 发光（纯色矩形/模块）。 */
+    public static void glowRect(float x, float y, float w, float h, int color, float strength) {
+        glowRoundRect(x, y, w, h, 0f, color, strength);
     }
 }

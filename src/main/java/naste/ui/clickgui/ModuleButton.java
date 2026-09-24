@@ -4,28 +4,24 @@ import naste.Myau;
 import naste.property.Property;
 import naste.property.properties.*;
 import naste.ui.clickgui.setting.*;
-import naste.util.ColorUtils;
 import naste.util.animation.Animation;
 import naste.util.animation.Easings;
 import naste.util.render.Render2D;
+import naste.util.render.UiTheme;
 import naste.module.Module;
-import net.minecraft.client.Minecraft;
+import naste.util.KeyBindUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Nya 风格模块条目。
- * 三动画：toggle（开关高亮）、hover、settings（设置展开）。
- * 背景 = 基础色 + hover + toggle 高亮（三层混合）。
+ * 模块行（Setsuna 风格）。
+ * 模块是 Panel body 里的一行（17 高），无独立外框；
+ * 展开时设置行内缩显示。
  */
 public class ModuleButton {
-    // Nya 配色
-    private static final int BG_BASE   = 0xFF16161B;
-    private static final int BG_HOVER  = 0xFF1F1F26;
-    private static final int ACCENT    = 0xFFBB86FC;
-    private static final int TEXT_ON   = 0xFFFFFFFF;
-    private static final int TEXT_OFF  = 0xFF999999;
+    public static final float HEADER_H = 17f;
+    private static final float SECTION_INSET = 4f;
 
     private final Module module;
     private final Panel panel;
@@ -35,10 +31,11 @@ public class ModuleButton {
     private float width;
 
     private boolean expanded;
+    private boolean binding;
 
-    private final Animation toggleAnim  = new Animation(Easings.CUBIC_OUT, 200, 0f);
-    private final Animation hoverAnim   = new Animation(Easings.CUBIC_OUT, 150, 0f);
-    private final Animation expandAnim  = new Animation(Easings.EXPO_OUT, 250, 0f);
+    private final Animation toggleAnim = new Animation(Easings.CUBIC_OUT, 200, 0f);
+    private final Animation hoverAnim  = new Animation(Easings.CUBIC_OUT, 150, 0f);
+    private final Animation expandAnim = new Animation(Easings.CUBIC_OUT, 250, 0f);
 
     private final List<SettingComponent> settings = new ArrayList<>();
 
@@ -53,15 +50,14 @@ public class ModuleButton {
     private void buildSettings() {
         ArrayList<Property<?>> props = Myau.propertyManager.properties.get(module.getClass());
         if (props == null) return;
-        float sy = y + getHeaderHeight() + 2;
+        float sy = y + HEADER_H + 1;
         for (Property<?> prop : props) {
+            SettingComponent c = null;
             if (prop instanceof BooleanProperty) {
-                SettingComponent c = new BooleanComponent((BooleanProperty) prop, x, sy, width);
-                settings.add(c);
-                sy += c.getHeight() + 1;
+                c = new BooleanComponent((BooleanProperty) prop, x, sy, width);
             } else if (prop instanceof FloatProperty) {
                 FloatProperty fp = (FloatProperty) prop;
-                SettingComponent c = new NumberComponent(fp.getName(), new NumberComponent.NumberHolder() {
+                c = new NumberComponent(fp.getName(), new NumberComponent.NumberHolder() {
                     public float get() { return fp.getValue(); }
                     public void set(float v) { fp.setValue(v); }
                     public float getMin() { return fp.getMinimum(); }
@@ -69,11 +65,9 @@ public class ModuleButton {
                     public String display() { return String.format("%.2f", fp.getValue()); }
                     public boolean integer() { return false; }
                 }, x, sy, width);
-                settings.add(c);
-                sy += c.getHeight() + 1;
             } else if (prop instanceof IntProperty) {
                 IntProperty ip = (IntProperty) prop;
-                SettingComponent c = new NumberComponent(ip.getName(), new NumberComponent.NumberHolder() {
+                c = new NumberComponent(ip.getName(), new NumberComponent.NumberHolder() {
                     public float get() { return ip.getValue(); }
                     public void set(float v) { ip.setValue((int) v); }
                     public float getMin() { return ip.getMinimum(); }
@@ -81,11 +75,9 @@ public class ModuleButton {
                     public String display() { return String.valueOf(ip.getValue()); }
                     public boolean integer() { return true; }
                 }, x, sy, width);
-                settings.add(c);
-                sy += c.getHeight() + 1;
             } else if (prop instanceof PercentProperty) {
                 PercentProperty pp = (PercentProperty) prop;
-                SettingComponent c = new NumberComponent(pp.getName(), new NumberComponent.NumberHolder() {
+                c = new NumberComponent(pp.getName(), new NumberComponent.NumberHolder() {
                     public float get() { return pp.getValue(); }
                     public void set(float v) { pp.setValue((int) v); }
                     public float getMin() { return pp.getMinimum(); }
@@ -93,14 +85,12 @@ public class ModuleButton {
                     public String display() { return pp.getValue() + "%"; }
                     public boolean integer() { return true; }
                 }, x, sy, width);
-                settings.add(c);
-                sy += c.getHeight() + 1;
             } else if (prop instanceof ModeProperty) {
-                SettingComponent c = new ModeComponent((ModeProperty) prop, x, sy, width);
-                settings.add(c);
-                sy += c.getHeight() + 1;
+                c = new ModeComponent((ModeProperty) prop, x, sy, width);
             } else if (prop instanceof ColorProperty) {
-                SettingComponent c = new ColorComponent((ColorProperty) prop, x, sy, width);
+                c = new ColorComponent((ColorProperty) prop, x, sy, width);
+            }
+            if (c != null) {
                 settings.add(c);
                 sy += c.getHeight() + 1;
             }
@@ -108,16 +98,13 @@ public class ModuleButton {
     }
 
     public float getHeaderHeight() {
-        return 16f;
+        return HEADER_H;
     }
 
     public float getHeight() {
-        float h = getHeaderHeight();
+        float h = HEADER_H;
         if (expanded) {
-            for (SettingComponent c : settings) {
-                h += c.getHeight() + 1;
-            }
-            h += 2;
+            for (SettingComponent c : settings) h += c.getHeight() + 1;
         }
         return h;
     }
@@ -125,73 +112,86 @@ public class ModuleButton {
     public void setPosition(float x, float y) {
         this.x = x;
         this.y = y;
+        float sy = y + HEADER_H + 1;
+        for (SettingComponent c : settings) {
+            c.setPosition(x, sy);
+            c.setWidth(width);
+            sy += c.getHeight() + 1;
+        }
     }
 
     public void setWidth(float width) {
         this.width = width;
-        // 子组件宽度同步（简化：重新布局）
     }
 
     public void render(int mouseX, int mouseY) {
-        // 同步 toggle 动画
         float tTarget = module.isEnabled() ? 1f : 0f;
-        if (Math.abs(toggleAnim.getValue() - tTarget) > 0.001f && !toggleAnim.isRunning()) {
-            toggleAnim.animate(tTarget);
-        }
-        // hover 动画
-        boolean hovering = mouseX >= x && mouseX <= x + width
-                && mouseY >= y && mouseY <= y + getHeaderHeight();
+        if (Math.abs(toggleAnim.getValue() - tTarget) > 0.001f && !toggleAnim.isRunning()) toggleAnim.animate(tTarget);
+        boolean hovering = mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + HEADER_H;
         float hTarget = hovering ? 1f : 0f;
-        if (Math.abs(hoverAnim.getValue() - hTarget) > 0.001f && !hoverAnim.isRunning()) {
-            hoverAnim.animate(hTarget);
-        }
-        // expand 动画
+        if (Math.abs(hoverAnim.getValue() - hTarget) > 0.001f && !hoverAnim.isRunning()) hoverAnim.animate(hTarget);
         float eTarget = expanded ? 1f : 0f;
-        if (Math.abs(expandAnim.getValue() - eTarget) > 0.001f && !expandAnim.isRunning()) {
-            expandAnim.animate(eTarget);
-        }
+        if (Math.abs(expandAnim.getValue() - eTarget) > 0.001f && !expandAnim.isRunning()) expandAnim.animate(eTarget);
 
         float toggle = toggleAnim.getValue();
         float hover = hoverAnim.getValue();
+        float expand = expandAnim.getValue();
 
-        // 背景三层混合
-        int bg = BG_BASE;
-        bg = ColorUtils.blend(bg, ColorUtils.withAlpha(BG_HOVER, (int) (0xFF * hover)));
-        bg = ColorUtils.blend(bg, ColorUtils.withAlpha(ACCENT, (int) (0x66 * toggle)));
+        int accent = UiTheme.accent();
 
-        float headerH = getHeaderHeight();
-        Render2D.fillRect(x, y, width, headerH, bg);
+        // 行背景（hover 时微亮，开启时淡 accent）
+        int rowBg = 0;
+        if (hover > 0.01f) rowBg = UiTheme.withAlpha(UiTheme.SURFACE_HOVER, (int) (140 * hover));
+        if (toggle > 0.01f) {
+            int accentBg = UiTheme.withAlpha(accent, (int) (60 * toggle));
+            rowBg = rowBg == 0 ? accentBg : naste.util.ColorUtils.blend(rowBg, accentBg);
+        }
+        if (rowBg != 0) {
+            Render2D.fillRect(x, y, width, HEADER_H, rowBg);
+        }
 
-        // 名字（居中）
-        String name = module.getName();
-        int nameColor = ColorUtils.interpolate(TEXT_OFF, TEXT_ON, toggle);
-        int tw = Minecraft.getMinecraft().fontRendererObj.getStringWidth(name);
-        Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(
-                name, (int) (x + (width - tw) / 2f), (int) (y + (headerH - 8) / 2f), nameColor);
+        // 开启模块左侧 accent 指示条
+        if (toggle > 0.01f) {
+            Render2D.fillRoundRect(x, y + 3, 2f, HEADER_H - 6, 1f,
+                    UiTheme.withAlpha(accent, (int) (255 * toggle)));
+        }
 
-        // 设置展开：裁剪 + 渲染子组件
-        if (expanded || expandAnim.getValue() > 0.01f) {
-            float sy = y + headerH + 2;
+        // 名字（左）
+        float nameSize = 9f;
+        int nameColor = module.isEnabled() ? UiTheme.TEXT : UiTheme.TEXT_MUTED;
+        naste.util.font.Fonts.drawCenteredY(module.getName(), x + 6, y, HEADER_H, nameColor, nameSize);
+
+        // 右侧：绑定 / ^v
+        String right;
+        if (binding) right = "...";
+        else if (module.getKey() != 0) right = KeyBindUtil.getKeyName(module.getKey());
+        else right = expanded ? "-" : "+";
+        int rightColor = module.getKey() != 0 && !binding ? UiTheme.TEXT_FAINT : UiTheme.TEXT_MUTED;
+        float rw = naste.util.font.Fonts.width(right, 9f);
+        naste.util.font.Fonts.drawCenteredY(right, x + width - 6 - rw, y, HEADER_H,
+                binding ? accent : rightColor, 9f);
+
+        // 设置（展开）：内缩背景
+        if (expand > 0.01f) {
+            float sy = y + HEADER_H + 1;
             for (SettingComponent c : settings) {
+                float ch = c.getHeight();
+                Render2D.fillRoundRect(x + SECTION_INSET, sy + 1,
+                        width - SECTION_INSET * 2, ch - 2, UiTheme.RADIUS_TINY, UiTheme.SETTING_BG);
                 c.setPosition(x, sy);
                 c.setWidth(width);
                 c.render(mouseX, mouseY);
-                sy += c.getHeight() + 1;
+                sy += ch + 1;
             }
         }
     }
 
     public boolean mouseClicked(int mouseX, int mouseY, int button) {
-        boolean onHeader = mouseX >= x && mouseX <= x + width
-                && mouseY >= y && mouseY <= y + getHeaderHeight();
+        boolean onHeader = mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + HEADER_H;
         if (onHeader) {
-            if (button == 0) {
-                module.toggle();
-                return true;
-            } else if (button == 1) {
-                expanded = !expanded;
-                return true;
-            }
+            if (button == 0) { module.toggle(); return true; }
+            else if (button == 1) { expanded = !expanded; setPosition(x, y); return true; }
+            else if (button == 2) { binding = true; return true; }
         }
         if (expanded) {
             for (SettingComponent c : settings) {
@@ -202,14 +202,24 @@ public class ModuleButton {
     }
 
     public void mouseReleased(int mouseX, int mouseY, int button) {
-        if (expanded) {
-            for (SettingComponent c : settings) c.mouseReleased(mouseX, mouseY, button);
-        }
+        if (expanded) for (SettingComponent c : settings) c.mouseReleased(mouseX, mouseY, button);
     }
 
     public void mouseDragged(int mouseX, int mouseY, int button) {
-        if (expanded) {
-            for (SettingComponent c : settings) c.mouseDragged(mouseX, mouseY, button);
+        if (expanded) for (SettingComponent c : settings) c.mouseDragged(mouseX, mouseY, button);
+    }
+
+    public boolean keyTyped(char typedChar, int keyCode) {
+        if (binding) {
+            if (keyCode == 1 || keyCode == 211) module.setKey(0);
+            else module.setKey(keyCode);
+            binding = false;
+            return true;
         }
+        return false;
+    }
+
+    public boolean isBinding() {
+        return binding;
     }
 }

@@ -30,7 +30,7 @@ public class BooleanComponent extends SettingComponent {
 
     @Override
     public float getHeight() {
-        return 18f;
+        return 17f;
     }
 
     @Override
@@ -47,9 +47,9 @@ public class BooleanComponent extends SettingComponent {
         float h = getHeight();
         // 左侧：属性名
         int textColor = ColorUtils.interpolate(TEXT, TEXT_ON, t);
-        Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(
-                property.getName().replace("-", " "),
-                (int) (x + 2), (int) (y + (h - 8) / 2f), textColor);
+        float size = naste.util.font.Fonts.SMALL;
+        naste.util.font.Fonts.drawCenteredY(property.getName().replace("-", " "),
+                x + 4, y, h, textColor, size);
 
         // 右侧：胶囊开关
         float trackW = 20f;

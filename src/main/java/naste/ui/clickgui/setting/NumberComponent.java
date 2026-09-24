@@ -37,7 +37,7 @@ public class NumberComponent extends SettingComponent {
 
     @Override
     public float getHeight() {
-        return 22f;
+        return 17f;
     }
 
     @Override
@@ -46,20 +46,18 @@ public class NumberComponent extends SettingComponent {
 
         float h = getHeight();
         // 名字（左）
-        Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(
-                name, (int) (x + 2), (int) y, TEXT);
+        float size = naste.util.font.Fonts.SMALL;
+        naste.util.font.Fonts.drawCenteredY(name, x + 4, y, h - 6, TEXT, size);
         // 值（右）
         String val = holder.display();
-        Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(
-                val,
-                (int) (x + width - 2 - Minecraft.getMinecraft().fontRendererObj.getStringWidth(val)),
-                (int) y, TEXT);
+        float vw = naste.util.font.Fonts.width(val, size);
+        naste.util.font.Fonts.drawCenteredY(val, x + width - 4 - vw, y, h - 6, TEXT, size);
 
         // 滑条
-        float trackX = x + 2;
-        float trackY = y + 12;
-        float trackW = width - 4;
-        float trackH = 4f;
+        float trackX = x + 4;
+        float trackY = y + h - 5;
+        float trackW = width - 8;
+        float trackH = 3f;
         float radius = trackH / 2f;
 
         Render2D.fillRoundRect(trackX, trackY, trackW, trackH, radius, TRACK_BG);

@@ -22,8 +22,65 @@ import java.util.List;
 public class ClickGuiScreen extends GuiScreen {
     public static final int BG_OVERLAY = 0xC80E0E11;
 
+    // 背景图
+    private int bgTexture = -2; // -2 = 未加载, -1 = 加载失败
+    private int bgWidth = 1920, bgHeight = 1080;
+
+    /** 加载背景图（懒加载）。 */
+    private int backgroundTexture() {
+        if (bgTexture != -2) return bgTexture;
+        try {
+            java.io.InputStream is = net.minecraft.client.Minecraft.getMinecraft()
+                    .getResourceManager().getResource(
+                            new net.minecraft.util.ResourceLocation("naste:textures/background.png"))
+                    .getInputStream();
+            java.awt.image.BufferedImage img = javax.imageio.ImageIO.read(is);
+            bgWidth = img.getWidth();
+            bgHeight = img.getHeight();
+            bgTexture = uploadTexture(img);
+            is.close();
+        } catch (Throwable t) {
+            bgTexture = -1;
+        }
+        return bgTexture;
+    }
+
+    private static int uploadTexture(java.awt.image.BufferedImage img) {
+        int w = img.getWidth(), h = img.getHeight();
+        int[] pixels = new int[w * h];
+        img.getRGB(0, 0, w, h, pixels, 0, w);
+        java.nio.ByteBuffer buf = java.nio.ByteBuffer.allocateDirect(w * h * 4)
+                .order(java.nio.ByteOrder.nativeOrder());
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int argb = pixels[y * w + x];
+                buf.put((byte) ((argb >> 16) & 0xFF));
+                buf.put((byte) ((argb >> 8) & 0xFF));
+                buf.put((byte) (argb & 0xFF));
+                buf.put((byte) ((argb >> 24) & 0xFF));
+            }
+        }
+        buf.flip();
+        int texId = org.lwjgl.opengl.GL11.glGenTextures();
+        net.minecraft.client.renderer.GlStateManager.bindTexture(texId);
+        org.lwjgl.opengl.GL11.glTexParameteri(org.lwjgl.opengl.GL11.GL_TEXTURE_2D,
+                org.lwjgl.opengl.GL11.GL_TEXTURE_MIN_FILTER, org.lwjgl.opengl.GL11.GL_LINEAR);
+        org.lwjgl.opengl.GL11.glTexParameteri(org.lwjgl.opengl.GL11.GL_TEXTURE_2D,
+                org.lwjgl.opengl.GL11.GL_TEXTURE_MAG_FILTER, org.lwjgl.opengl.GL11.GL_LINEAR);
+        org.lwjgl.opengl.GL11.glTexImage2D(org.lwjgl.opengl.GL11.GL_TEXTURE_2D, 0,
+                org.lwjgl.opengl.GL11.GL_RGBA, w, h, 0,
+                org.lwjgl.opengl.GL11.GL_RGBA, org.lwjgl.opengl.GL11.GL_UNSIGNED_BYTE, buf);
+        return texId;
+    }
+
     private final List<Panel> panels = new ArrayList<>();
     private final Animation openAnim = new Animation(Easings.CUBIC_OUT, 220, 0f);
+
+    /** 呼吸灯强度（0.7 ~ 1.0 循环，周期 2s）。 */
+    private float breath() {
+        double phase = (System.currentTimeMillis() % 2000L) / 2000.0;
+        return (float) (0.85 + 0.15 * Math.sin(phase * Math.PI * 2));
+    }
 
     public ClickGuiScreen() {
         // 分类（复用旧 ClickGui 的分类）
@@ -136,20 +193,108 @@ public class ClickGuiScreen extends GuiScreen {
         int w = sr.getScaledWidth();
         int h = sr.getScaledHeight();
 
-        // 遮罩
-        int overlay = ((int) (0xC8 * open) << 24) | (BG_OVERLAY & 0x00FFFFFF);
-        Render2D.fillRect(0, 0, w, h, overlay);
+        // 背景图（cover 铺满）+ 半透明遮罩
+        int a = (int) (0xC8 * open);
+        int bgTex = backgroundTexture();
+        if (bgTex != -1) {
+            net.minecraft.client.renderer.GlStateManager.bindTexture(bgTex);
+            Render2D.drawTextureCover(0, 0, w, h, bgWidth, bgHeight);
+            // 遮罩（60~70% 黑）
+            Render2D.fillRect(0, 0, w, h, (a << 24) | 0x000000);
+        } else {
+            int top = (a << 24) | 0x0A0C10;
+            int bottom = (a << 24) | 0x16181E;
+            Render2D.fillGradientRectV(0, 0, w, h, top, bottom);
+        }
 
         // 面板
         for (Panel p : panels) {
             p.render(mouseX, mouseY);
         }
 
+        // 调色盘（右上角一排色块）
+        renderPalette(w, h, mouseX, mouseY);
+
+        // 水印（呼吸灯）
+        float breath = breath() * open;
+        String watermark = "Naste";
+        float wmSize = 14f;
+        float wmW = naste.util.font.Fonts.width(watermark, wmSize);
+        float wmX = w - wmW - 10;
+        float wmY = 10;
+        // 发光底
+        Render2D.glowRoundRect(wmX - 2, wmY - 1, wmW + 4, wmSize + 4, 3f,
+                naste.util.render.UiTheme.accent(), breath);
+        naste.util.font.Fonts.draw(watermark, wmX, wmY,
+                naste.util.render.UiTheme.withAlpha(naste.util.render.UiTheme.TEXT, (int) (255 * breath)), wmSize);
+
         super.drawScreen(mouseX, mouseY, partialTicks);
+    }
+
+    // 调色盘布局
+    private static final float SWATCH_SIZE = 14f;
+    private static final float SWATCH_GAP = 6f;
+    private static final float PALETTE_MARGIN = 10f;
+
+    private float paletteX(int w) {
+        int count = naste.util.render.UiTheme.presetCount();
+        float totalW = count * SWATCH_SIZE + (count - 1) * SWATCH_GAP;
+        return w - PALETTE_MARGIN - totalW;
+    }
+
+    private float paletteY(int h) {
+        return h - PALETTE_MARGIN - SWATCH_SIZE;
+    }
+
+    private void renderPalette(int w, int h, int mouseX, int mouseY) {
+        int count = naste.util.render.UiTheme.presetCount();
+        float px = paletteX(w);
+        float py = paletteY(h);
+        for (int i = 0; i < count; i++) {
+            float sx = px + i * (SWATCH_SIZE + SWATCH_GAP);
+            int color = naste.util.render.UiTheme.presetColor(i);
+            boolean selected = i == naste.util.render.UiTheme.getAccentIndex();
+            boolean hover = mouseX >= sx && mouseX <= sx + SWATCH_SIZE && mouseY >= py && mouseY <= py + SWATCH_SIZE;
+            // 色块
+            Render2D.fillRoundRect(sx, py, SWATCH_SIZE, SWATCH_SIZE, 4f, color);
+            // 选中/悬停描边
+            if (selected) {
+                Render2D.strokeRoundRect(sx - 1.5f, py - 1.5f, SWATCH_SIZE + 3, SWATCH_SIZE + 3, 5f, 1.5f, 0xFFFFFFFF);
+            } else if (hover) {
+                Render2D.strokeRoundRect(sx - 1f, py - 1f, SWATCH_SIZE + 2, SWATCH_SIZE + 2, 4.5f, 1f, 0x88FFFFFF);
+            }
+        }
+    }
+
+    private boolean paletteClicked(int mouseX, int mouseY, int w, int h) {
+        int count = naste.util.render.UiTheme.presetCount();
+        float px = paletteX(w);
+        float py = paletteY(h);
+        for (int i = 0; i < count; i++) {
+            float sx = px + i * (SWATCH_SIZE + SWATCH_GAP);
+            if (mouseX >= sx && mouseX <= sx + SWATCH_SIZE && mouseY >= py && mouseY <= py + SWATCH_SIZE) {
+                naste.util.render.UiTheme.setAccentIndex(i);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public void keyTyped(char typedChar, int keyCode) throws IOException {
+        // 优先给正在绑定的模块
+        for (Panel p : panels) {
+            if (p.keyTyped(typedChar, keyCode)) return;
+        }
+        super.keyTyped(typedChar, keyCode);
     }
 
     @Override
     public void mouseClicked(int mouseX, int mouseY, int button) throws IOException {
+        if (button == 0) {
+            ScaledResolution sr = new ScaledResolution(mc);
+            if (paletteClicked(mouseX, mouseY, sr.getScaledWidth(), sr.getScaledHeight())) return;
+        }
         for (Panel p : panels) {
             if (p.mouseClicked(mouseX, mouseY, button)) break;
         }
@@ -174,7 +319,12 @@ public class ClickGuiScreen extends GuiScreen {
     public void handleMouseInput() throws IOException {
         super.handleMouseInput();
         int wheel = Mouse.getEventDWheel();
-        // TODO: 滚动支持（后续）
+        if (wheel != 0) {
+            float delta = wheel > 0 ? 12f : -12f;
+            for (Panel p : panels) {
+                p.setPosition(p.getX(), p.getY() + delta);
+            }
+        }
     }
 
     @Override
