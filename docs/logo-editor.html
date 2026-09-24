@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>N Logo Editor</title>
+<style>
+  body { margin:0; background:#111; color:#eee; font-family:system-ui,sans-serif; display:flex; height:100vh; }
+  #preview { flex:1; display:flex; align-items:center; justify-content:center; }
+  #preview svg { width:60vmin; height:60vmin; }
+  #panel { width:340px; background:#1a1a1a; padding:20px; overflow-y:auto; }
+  .row { margin-bottom:14px; }
+  label { display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px; color:#aaa; }
+  input[type=range] { width:100%; }
+  input[type=color] { width:100%; height:36px; border:none; background:none; }
+  .val { color:#3ED6B4; font-weight:600; }
+  h2 { font-size:15px; color:#3ED6B4; margin-bottom:16px; }
+</style>
+</head>
+<body>
+<div id="preview"></div>
+<div id="panel">
+  <h2>N Logo Editor</h2>
+  <div class="row"><label>倾斜角 skewX <span class="val" id="v-skew">-16</span></label><input type="range" id="skew" min="-40" max="0" value="-16"></div>
+  <div class="row"><label>左竖宽 <span class="val" id="v-lw">46</span></label><input type="range" id="lw" min="10" max="120" value="46"></div>
+  <div class="row"><label>右竖宽 <span class="val" id="v-rw">46</span></label><input type="range" id="rw" min="10" max="120" value="46"></div>
+  <div class="row"><label>N 宽 <span class="val" id="v-nw">252</span></label><input type="range" id="nw" min="120" max="360" value="252"></div>
+  <div class="row"><label>N 高 <span class="val" id="v-nh">288</span></label><input type="range" id="nh" min="120" max="400" value="288"></div>
+  <div class="row"><label>尖角长度 <span class="val" id="v-tip">50</span></label><input type="range" id="tip" min="0" max="160" value="50"></div>
+  <div class="row"><label>发光强度 <span class="val" id="v-glow">10</span></label><input type="range" id="glow" min="0" max="30" value="10"></div>
+  <div class="row"><label>颜色</label><input type="color" id="color" value="#3ED6B4"></div>
+  <div class="row"><label>背景</label><input type="color" id="bg" value="#07090B"></div>
+</div>
+<script>
+function render() {
+  const skew = +skew_.value, lw = +lw_.value, rw = +rw_.value, nw = +nw_.value, nh = +nh_.value, tip = +tip_.value, glow = +glow_.value;
+  const color = color_.value, bg = bg_.value;
+  const x0 = 256 - nw/2, y0 = 256 - nh/2;
+  const x1 = x0 + lw, x2 = x0 + nw - rw, x3 = x0 + nw;
+  const y1 = y0 + nh;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+    <defs><filter id="g" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="${glow}" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter></defs>
+    <rect width="512" height="512" fill="${bg}"/>
+    <g filter="url(#g)" fill="${color}" transform="skewX(${skew})">
+      <polygon points="${x0},${y0} ${x0},${y1} ${x1},${y1} ${x1},${y0}"/>
+      <polygon points="${x1},${y0} ${x1+tip},${y0} ${x2},${y1} ${x2-tip},${y1}"/>
+      <polygon points="${x2},${y0} ${x3},${y0} ${x3},${y1} ${x2},${y1}"/>
+    </g>
+  </svg>`;
+  document.getElementById('preview').innerHTML = svg;
+  v_skew.textContent = skew; v_lw.textContent = lw; v_rw.textContent = rw; v_nw.textContent = nw; v_nh.textContent = nh; v_tip.textContent = tip; v_glow.textContent = glow;
+}
+['skew','lw','rw','nw','nh','tip','glow','color','bg'].forEach(id => {
+  const el = document.getElementById(id);
+  window[id+'_'] = el;
+  el.addEventListener('input', render);
+});
+render();
+</script>
+</body>
+</html>

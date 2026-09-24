@@ -18,12 +18,12 @@ public class MixinGuiMainMenu {
     private void drawScreen(int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
         ScaledResolution sr = new ScaledResolution(net.minecraft.client.Minecraft.getMinecraft());
         int w = sr.getScaledWidth();
-        // 顶部水印（accent 发光）
+        // NASTE 标题（放在原版 Logo 下方，避免重叠）
         String title = "NASTE";
-        float size = 24f;
+        float size = 20f;
         float tw = naste.util.font.Fonts.width(title, size);
         float tx = (w - tw) / 2f;
-        float ty = 20f;
+        float ty = 52f;
         Render2D.glowRoundRect(tx - 4, ty - 2, tw + 8, size + 6, 4f, UiTheme.accent(), 0.8f);
         naste.util.font.Fonts.draw(title, tx, ty, UiTheme.accent(), size);
     }

@@ -20,7 +20,7 @@ import java.util.Optional;
  */
 public class AccountManager {
     private static final Minecraft mc = Minecraft.getMinecraft();
-    private static final File file = new File(mc.mcDataDir, "openmyau.accounts.json");
+    private static final File file = new File(mc.mcDataDir, "naste.accounts.json");
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     public static final ArrayList<Account> accounts = new ArrayList<>();
@@ -33,11 +33,11 @@ public class AccountManager {
             try {
                 if (file.getParentFile().exists() || file.getParentFile().mkdirs()) {
                     if (file.createNewFile()) {
-                        System.out.print("Successfully created openmyau.accounts.json!");
+                        System.out.print("Successfully created naste.accounts.json!");
                     }
                 }
             } catch (IOException e) {
-                System.err.print("Couldn't create openmyau.accounts.json!");
+                System.err.print("Couldn't create naste.accounts.json!");
             }
         }
     }
@@ -63,7 +63,7 @@ public class AccountManager {
                 }
             }
         } catch (FileNotFoundException e) {
-            System.err.print("Couldn't find openmyau.accounts.json!");
+            System.err.print("Couldn't find naste.accounts.json!");
         }
     }
 
@@ -84,7 +84,7 @@ public class AccountManager {
             printWriter.println(gson.toJson(jsonArray));
             printWriter.close();
         } catch (IOException e) {
-            System.err.print("Couldn't save openmyau.accounts.json!");
+            System.err.print("Couldn't save naste.accounts.json!");
         }
     }
 }

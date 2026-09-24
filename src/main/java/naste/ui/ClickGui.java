@@ -21,7 +21,7 @@ import java.util.List;
 
 public class ClickGui extends GuiScreen {
     private static ClickGui instance;
-    private final File configFile = new File("./config/Myau/", "clickgui.txt");
+    private final File configFile = new File("./config/Naste/", "clickgui.txt");
     private final ArrayList<CategoryComponent> categoryList;
 
     public ClickGui() {
