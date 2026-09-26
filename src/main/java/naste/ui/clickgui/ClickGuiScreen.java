@@ -198,19 +198,11 @@ public class ClickGuiScreen extends GuiScreen {
         int w = sr.getScaledWidth();
         int h = sr.getScaledHeight();
 
-        // 背景图（cover 铺满）+ 半透明遮罩
+        // 游戏内：纯色渐变（不要背景图）
         int a = (int) (0xC8 * open);
-        int bgTex = backgroundTexture();
-        if (bgTex != -1) {
-            net.minecraft.client.renderer.GlStateManager.bindTexture(bgTex);
-            Render2D.drawTextureCover(0, 0, w, h, bgWidth, bgHeight);
-            // 遮罩（60~70% 黑）
-            Render2D.fillRect(0, 0, w, h, (a << 24) | 0x000000);
-        } else {
-            int top = (a << 24) | 0x0A0C10;
-            int bottom = (a << 24) | 0x16181E;
-            Render2D.fillGradientRectV(0, 0, w, h, top, bottom);
-        }
+        int top = (a << 24) | 0x0A0C10;
+        int bottom = (a << 24) | 0x16181E;
+        Render2D.fillGradientRectV(0, 0, w, h, top, bottom);
 
         // 面板
         for (Panel p : panels) {
